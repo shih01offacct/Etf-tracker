@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>損益計算器</title>
+    <title>ETF損益計算器</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -34,12 +34,8 @@
             padding: 36px 16px;
         }
 
-        .page-wrap {
-            max-width: 1060px;
-            margin: 0 auto;
-        }
+        .page-wrap { max-width: 1060px; margin: 0 auto; }
 
-        /* ── Header ── */
         header {
             display: flex;
             align-items: center;
@@ -54,19 +50,9 @@
             display: grid; place-items: center;
             font-size: 22px;
         }
-        header h1 {
-            font-size: 21px;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -0.2px;
-        }
-        header p {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 3px;
-        }
+        header h1 { font-size: 21px; font-weight: 700; letter-spacing: -0.2px; }
+        header p  { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
-        /* ── Summary Cards ── */
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -79,22 +65,11 @@
             border-radius: var(--radius);
             padding: 16px 20px;
         }
-        .card-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            letter-spacing: 0.5px;
-        }
-        .card-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--text);
-        }
+        .card-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px; }
+        .card-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; color: var(--text); }
         .card-value.profit { color: var(--profit); }
         .card-value.loss   { color: var(--loss); }
 
-        /* ── Panel ── */
         .panel {
             background: var(--surface);
             border: 1.5px solid var(--border);
@@ -104,76 +79,43 @@
         .panel-header {
             padding: 13px 20px;
             border-bottom: 1.5px solid var(--border-soft);
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 13px; font-weight: 500;
             color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
             background: var(--surface2);
         }
-        .dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 
-        /* ── Table ── */
         .table-wrap { overflow-x: auto; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
         thead th {
             padding: 11px 14px;
             text-align: right;
             color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.3px;
+            font-size: 12px; font-weight: 500; letter-spacing: 0.3px;
             border-bottom: 1.5px solid var(--border-soft);
             background: var(--surface2);
             white-space: nowrap;
         }
         thead th:first-child { text-align: left; }
-
-        tbody tr {
-            border-bottom: 1px solid var(--border-soft);
-            transition: background 0.15s;
-        }
+        tbody tr { border-bottom: 1px solid var(--border-soft); transition: background 0.15s; }
         tbody tr:last-child { border-bottom: none; }
         tbody tr:hover { background: var(--bg2); }
-
-        td {
-            padding: 13px 14px;
-            text-align: right;
-            white-space: nowrap;
-        }
+        td { padding: 13px 14px; text-align: right; white-space: nowrap; }
         td:first-child { text-align: left; }
 
-        .etf-code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--accent);
-        }
-        .etf-name {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
+        .etf-code { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; color: var(--accent); }
+        .etf-name { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .etf-src  { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
 
         input[type="number"] {
-            width: 96px;
-            padding: 7px 10px;
+            width: 96px; padding: 7px 10px;
             background: var(--bg);
             border: 1.5px solid var(--border);
             border-radius: 6px;
             color: var(--text);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            text-align: right;
+            font-size: 13px; text-align: right;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         input[type="number"]:focus {
@@ -184,96 +126,58 @@
         input[type="number"]::placeholder { color: var(--text-dim); }
 
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .profit-cell { color: var(--profit); font-weight: 600; }
-        .loss-cell   { color: var(--loss);   font-weight: 600; }
-        .neutral-cell{ color: var(--text-muted); }
+        .profit-cell  { color: var(--profit); font-weight: 600; }
+        .loss-cell    { color: var(--loss);   font-weight: 600; }
+        .neutral-cell { color: var(--text-muted); }
 
-        /* ── Footer Row ── */
         tfoot tr { background: var(--surface2); }
         tfoot td {
-            padding: 13px 14px;
-            text-align: right;
-            font-weight: 600;
+            padding: 13px 14px; text-align: right; font-weight: 600;
             border-top: 1.5px solid var(--border);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace; font-size: 14px;
         }
         tfoot td:first-child {
             text-align: left;
             font-family: 'Noto Sans TC', sans-serif;
-            font-size: 13px;
-            color: var(--text-muted);
+            font-size: 13px; color: var(--text-muted);
         }
 
-        /* ── Action Bar ── */
         .action-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            display: flex; align-items: center; gap: 12px;
             padding: 14px 20px;
             border-top: 1.5px solid var(--border-soft);
             background: var(--surface2);
             flex-wrap: wrap;
         }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
+            display: inline-flex; align-items: center; gap: 7px;
             padding: 9px 18px;
-            border: 1.5px solid transparent;
-            border-radius: 7px;
-            font-size: 14px;
-            font-family: 'Noto Sans TC', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
+            border: 1.5px solid transparent; border-radius: 7px;
+            font-size: 14px; font-family: 'Noto Sans TC', sans-serif; font-weight: 500;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
         }
-        .btn-primary {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
+        .btn-primary   { background: var(--accent); color: #fff; border-color: var(--accent); }
         .btn-primary:hover { background: #4a6840; border-color: #4a6840; }
-        .btn-secondary {
-            background: var(--surface);
-            color: var(--text);
-            border-color: var(--border);
-        }
+        .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
         .btn-secondary:hover { background: var(--bg2); }
-        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn:disabled  { opacity: 0.45; cursor: not-allowed; }
 
         .status-badge {
-            margin-left: auto;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 7px;
+            margin-left: auto; font-size: 13px;
+            display: flex; align-items: center; gap: 7px;
             color: var(--text-muted);
         }
-        .status-dot {
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: var(--text-dim);
-            flex-shrink: 0;
-        }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; }
         .status-dot.ok      { background: var(--loss); }
         .status-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
         .status-dot.error   { background: var(--profit); }
 
-        @keyframes pulse {
-            0%,100% { opacity: 1; }
-            50%      { opacity: 0.25; }
-        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
         .spinner {
-            display: inline-block;
-            width: 13px; height: 13px;
-            border: 2px solid rgba(255,255,255,0.35);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            vertical-align: middle;
+            display: inline-block; width: 13px; height: 13px;
+            border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -284,35 +188,20 @@
     <header>
         <div class="header-icon">📊</div>
         <div>
-            <h1>擔保品 ETF 損益追蹤器</h1>
-            <p>台股 ETF · 即時收盤價 · 自動計算損益</p>
+            <h1>ETF損益計算器</h1>
+            <p>台股 ETF · 證交所 + 櫃買中心 · 自動計算損益</p>
         </div>
     </header>
 
     <div class="summary-grid">
-        <div class="card">
-            <div class="card-label">總投入成本</div>
-            <div class="card-value" id="sum-cost">—</div>
-        </div>
-        <div class="card">
-            <div class="card-label">目前總市值</div>
-            <div class="card-value" id="sum-value">—</div>
-        </div>
-        <div class="card">
-            <div class="card-label">損益金額</div>
-            <div class="card-value" id="sum-pl">—</div>
-        </div>
-        <div class="card">
-            <div class="card-label">整體報酬率</div>
-            <div class="card-value" id="sum-roi">—</div>
-        </div>
+        <div class="card"><div class="card-label">總投入成本</div><div class="card-value" id="sum-cost">—</div></div>
+        <div class="card"><div class="card-label">目前總市值</div><div class="card-value" id="sum-value">—</div></div>
+        <div class="card"><div class="card-label">損益金額</div><div class="card-value" id="sum-pl">—</div></div>
+        <div class="card"><div class="card-label">整體報酬率</div><div class="card-value" id="sum-roi">—</div></div>
     </div>
 
     <div class="panel">
-        <div class="panel-header">
-            <span class="dot"></span>
-            持倉明細
-        </div>
+        <div class="panel-header"><span class="dot"></span>持倉明細</div>
         <div class="table-wrap">
             <table>
                 <thead>
@@ -330,11 +219,8 @@
                 <tbody id="etf-body"></tbody>
                 <tfoot>
                     <tr>
-                        <td>合計</td>
-                        <td></td>
-                        <td id="ft-cost">—</td>
-                        <td></td>
-                        <td></td>
+                        <td>合計</td><td></td>
+                        <td id="ft-cost">—</td><td></td><td></td>
                         <td id="ft-value">—</td>
                         <td id="ft-pl">—</td>
                         <td id="ft-roi">—</td>
@@ -358,23 +244,40 @@
 
 </div>
 <script>
+// source: 'twse' | 'tpex'
 const ETF_LIST = [
-    { code: '00713', name: '元大台灣高息低波' },
-    { code: '00858', name: '永豐美國500大' },
-    { code: '00927', name: '群益半導體收益' },
+    { code: '00713', name: '元大台灣高息低波', source: 'twse' },
+    { code: '00858', name: '永豐美國500大',    source: 'tpex' },
+    { code: '00927', name: '群益半導體收益',   source: 'twse' },
 ];
 
+// ── API 來源設定 ─────────────────────────────────────────────
+const TWSE_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
+const TPEX_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_etf_dlprice';
+
+function makeProxies(url) {
+    return [
+        url,
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        `https://thingproxy.freeboard.io/fetch/${url}`,
+    ];
+}
+
+// ── 建立表格 ─────────────────────────────────────────────────
 function renderTable() {
     const tbody = document.getElementById('etf-body');
     tbody.innerHTML = '';
-    ETF_LIST.forEach(({ code, name }) => {
+    ETF_LIST.forEach(({ code, name, source }) => {
+        const srcLabel = source === 'tpex' ? '櫃買中心' : '證交所';
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
                 <div class="etf-code">${code}</div>
                 <div class="etf-name">${name}</div>
+                <div class="etf-src">${srcLabel}</div>
             </td>
-            <td><input type="number" id="shares-${code}" placeholder="股數" min="0" oninput="calculateAll()"></td>
+            <td><input type="number" id="shares-${code}" placeholder="股數"  min="0" oninput="calculateAll()"></td>
             <td><input type="number" id="cost-${code}"   placeholder="總成本" min="0" oninput="calculateAll()"></td>
             <td id="avg-${code}"   class="mono neutral-cell">—</td>
             <td><input type="number" id="price-${code}"  placeholder="可手填" step="0.01" min="0" oninput="calculateAll()"></td>
@@ -386,18 +289,18 @@ function renderTable() {
     });
 }
 
+// ── localStorage ─────────────────────────────────────────────
 function loadData() {
     ETF_LIST.forEach(({ code }) => {
-        ['shares','cost','price'].forEach(field => {
-            const v = localStorage.getItem(`${field}-${code}`);
-            if (v) document.getElementById(`${field}-${code}`).value = v;
+        ['shares','cost','price'].forEach(f => {
+            const v = localStorage.getItem(`${f}-${code}`);
+            if (v) document.getElementById(`${f}-${code}`).value = v;
         });
     });
 }
 
-function fmt(n) {
-    return n.toLocaleString('zh-TW', { maximumFractionDigits: 0 });
-}
+// ── 計算損益 ─────────────────────────────────────────────────
+function fmt(n) { return n.toLocaleString('zh-TW', { maximumFractionDigits: 0 }); }
 
 function applyPL(elPL, elROI, pl, hasData) {
     if (!hasData) {
@@ -406,8 +309,7 @@ function applyPL(elPL, elROI, pl, hasData) {
         return;
     }
     const cls = pl > 0 ? 'profit-cell' : pl < 0 ? 'loss-cell' : 'neutral-cell';
-    elPL.className  = `mono ${cls}`;
-    elROI.className = `mono ${cls}`;
+    elPL.className = `mono ${cls}`; elROI.className = `mono ${cls}`;
 }
 
 function calculateAll() {
@@ -418,12 +320,12 @@ function calculateAll() {
         const cost   = parseFloat(document.getElementById(`cost-${code}`).value)   || 0;
         const price  = parseFloat(document.getElementById(`price-${code}`).value)  || 0;
 
-        ['shares','cost','price'].forEach(f => {
-            localStorage.setItem(`${f}-${code}`, document.getElementById(`${f}-${code}`).value);
-        });
+        ['shares','cost','price'].forEach(f =>
+            localStorage.setItem(`${f}-${code}`, document.getElementById(`${f}-${code}`).value)
+        );
 
-        const avgEl = document.getElementById(`avg-${code}`);
-        avgEl.textContent = (shares > 0 && cost > 0) ? (cost / shares).toFixed(2) : '—';
+        document.getElementById(`avg-${code}`).textContent =
+            (shares > 0 && cost > 0) ? (cost / shares).toFixed(2) : '—';
 
         const totalValue = shares * price;
         const pl  = totalValue - cost;
@@ -432,12 +334,9 @@ function calculateAll() {
 
         document.getElementById(`value-${code}`).textContent = totalValue > 0 ? fmt(totalValue) : '—';
 
-        const plEl  = document.getElementById(`pl-${code}`);
+        const plEl = document.getElementById(`pl-${code}`);
         const roiEl = document.getElementById(`roi-${code}`);
-        if (hasData) {
-            plEl.textContent  = fmt(pl);
-            roiEl.textContent = roi.toFixed(2) + ' %';
-        }
+        if (hasData) { plEl.textContent = fmt(pl); roiEl.textContent = roi.toFixed(2) + ' %'; }
         applyPL(plEl, roiEl, pl, hasData);
 
         sumCost  += cost;
@@ -451,18 +350,18 @@ function calculateAll() {
     document.getElementById('sum-cost').textContent  = sumCost  > 0 ? fmt(sumCost)  : '—';
     document.getElementById('sum-value').textContent = sumValue > 0 ? fmt(sumValue) : '—';
 
+    ['sum-pl','sum-roi'].forEach(id => {
+        document.getElementById(id).textContent = '—';
+        document.getElementById(id).className = 'card-value';
+    });
     if (hasTotal) {
         const plCard  = document.getElementById('sum-pl');
         const roiCard = document.getElementById('sum-roi');
         plCard.textContent  = fmt(totalPL);
         roiCard.textContent = totalROI.toFixed(2) + ' %';
-        plCard.className  = `card-value ${totalPL > 0 ? 'profit' : totalPL < 0 ? 'loss' : ''}`;
-        roiCard.className = `card-value ${totalPL > 0 ? 'profit' : totalPL < 0 ? 'loss' : ''}`;
-    } else {
-        document.getElementById('sum-pl').textContent  = '—';
-        document.getElementById('sum-roi').textContent = '—';
-        document.getElementById('sum-pl').className  = 'card-value';
-        document.getElementById('sum-roi').className = 'card-value';
+        const cls = totalPL > 0 ? 'profit' : totalPL < 0 ? 'loss' : '';
+        plCard.className  = `card-value ${cls}`;
+        roiCard.className = `card-value ${cls}`;
     }
 
     document.getElementById('ft-cost').textContent  = sumCost  > 0 ? fmt(sumCost)  : '—';
@@ -473,13 +372,32 @@ function calculateAll() {
         ftPL.textContent  = fmt(totalPL);
         ftROI.textContent = totalROI.toFixed(2) + ' %';
         const cls = totalPL > 0 ? 'profit-cell' : totalPL < 0 ? 'loss-cell' : '';
-        ftPL.className  = cls;
-        ftROI.className = cls;
+        ftPL.className = cls; ftROI.className = cls;
     } else {
         ftPL.textContent = '—'; ftROI.textContent = '—';
+        ftPL.className = ''; ftROI.className = '';
     }
 }
 
+// ── 通用抓取（多代理備援）────────────────────────────────────
+async function fetchWithFallback(url) {
+    for (const proxy of makeProxies(url)) {
+        try {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 10000);
+            const res = await fetch(proxy, { signal: ctrl.signal });
+            clearTimeout(timer);
+            if (!res.ok) continue;
+            const json = await res.json();
+            if (Array.isArray(json) && json.length > 0) return json;
+        } catch (e) {
+            console.warn('失敗：', proxy, e.message);
+        }
+    }
+    return null;
+}
+
+// ── 主要抓取流程 ─────────────────────────────────────────────
 async function fetchPrices() {
     const btn   = document.getElementById('btn-fetch');
     const icon  = document.getElementById('fetch-icon');
@@ -489,51 +407,44 @@ async function fetchPrices() {
     btn.disabled = true;
     icon.innerHTML = '<span class="spinner"></span>';
     dot.className  = 'status-dot loading';
-    msgEl.textContent = '正在連線取得收盤價，請稍候…';
+    msgEl.textContent = '正在同時查詢證交所與櫃買中心…';
 
-    const TARGET = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
-    const PROXIES = [
-        TARGET,
-        `https://corsproxy.io/?${encodeURIComponent(TARGET)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`,
-        `https://thingproxy.freeboard.io/fetch/${TARGET}`,
-    ];
-
-    let data = null;
-    let usedProxy = '';
-
-    for (const url of PROXIES) {
-        try {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 10000);
-            const res = await fetch(url, { signal: controller.signal });
-            clearTimeout(timer);
-            if (!res.ok) continue;
-            const json = await res.json();
-            if (Array.isArray(json) && json.length > 0) {
-                data = json;
-                usedProxy = url === TARGET ? '直連' : new URL(url).hostname;
-                break;
-            }
-        } catch (e) {
-            console.warn('代理失敗：', url, e.message);
-        }
-    }
+    // 同時發出兩個請求，加快速度
+    const [twseData, tpexData] = await Promise.all([
+        fetchWithFallback(TWSE_URL),
+        fetchWithFallback(TPEX_URL),
+    ]);
 
     btn.disabled = false;
     icon.textContent = '🔄';
 
-    if (!data) {
+    if (!twseData && !tpexData) {
         dot.className = 'status-dot error';
         msgEl.textContent = '❌ 所有來源連線失敗，請手動輸入收盤價。';
         return;
     }
 
     let found = 0;
-    data.forEach(stock => {
-        const match = ETF_LIST.find(e => e.code === stock.Code);
-        if (match) {
-            document.getElementById(`price-${stock.Code}`).value = stock.ClosingPrice;
+
+    ETF_LIST.forEach(({ code, source }) => {
+        let price = null;
+
+        if (source === 'twse' && twseData) {
+            // TWSE 欄位：Code, ClosingPrice
+            const row = twseData.find(s => s.Code === code);
+            if (row) price = row.ClosingPrice;
+        } else if (source === 'tpex' && tpexData) {
+            // TPEX 欄位：SecuritiesCompanyCode, ClosingPrice 或 Close
+            const row = tpexData.find(s =>
+                s.SecuritiesCompanyCode === code ||
+                s.Code === code ||
+                s.stockCode === code
+            );
+            if (row) price = row.ClosingPrice || row.Close || row.close;
+        }
+
+        if (price !== null && price !== undefined && price !== '') {
+            document.getElementById(`price-${code}`).value = price;
             found++;
         }
     });
@@ -541,19 +452,18 @@ async function fetchPrices() {
     if (found > 0) {
         dot.className = 'status-dot ok';
         const now = new Date().toLocaleTimeString('zh-TW');
-        msgEl.textContent = `✅ ${now} 更新成功（${found} 檔，來源：${usedProxy}）`;
+        const twseOk = twseData ? '證交所✓' : '證交所✗';
+        const tpexOk = tpexData ? '櫃買✓'   : '櫃買✗';
+        msgEl.textContent = `✅ ${now} 更新 ${found} 檔（${twseOk} ${tpexOk}）`;
         calculateAll();
     } else {
         dot.className = 'status-dot error';
-        msgEl.textContent = '⚠️ 連線成功，但找不到目標 ETF 資料（可能今日休市）。';
+        msgEl.textContent = '⚠️ 連線成功但找不到價格，可能今日休市。';
     }
 }
 
-window.onload = () => {
-    renderTable();
-    loadData();
-    calculateAll();
-};
+// ── 初始化 ───────────────────────────────────────────────────
+window.onload = () => { renderTable(); loadData(); calculateAll(); };
 </script>
 </body>
 </html>
