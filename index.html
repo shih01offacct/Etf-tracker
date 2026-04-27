@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>擔保品 ETF 損益追蹤器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #1c2330;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-muted: #7d8590;
+            --text-dim: #484f58;
+            --accent: #58a6ff;
+            --accent-dim: #1f3a5a;
+            --profit: #f85149;
+            --profit-dim: #3d1a1a;
+            --loss: #3fb950;
+            --loss-dim: #1a3d22;
+            --neutral: #7d8590;
+            --warning: #d29922;
+            --radius: 8px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 32px 16px;
+        }
+
+        .page-wrap {
+            max-width: 1060px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ── */
+        header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+        .header-icon {
+            width: 44px; height: 44px;
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            display: grid; place-items: center;
+            font-size: 22px;
+        }
+        header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ── Summary Cards ── */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+        }
+        .card-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .card-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .card-value.profit { color: var(--profit); }
+        .card-value.loss   { color: var(--loss); }
+
+        /* ── Main Panel ── */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        /* ── Table ── */
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        thead th {
+            padding: 12px 14px;
+            text-align: right;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.4px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        thead th:first-child { text-align: left; }
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--surface2); }
+        td {
+            padding: 14px 14px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        td:first-child { text-align: left; }
+
+        .etf-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .etf-name {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        input[type="number"] {
+            width: 96px;
+            padding: 7px 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            text-align: right;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(88,166,255,0.15);
+        }
+        input[type="number"]::placeholder { color: var(--text-dim); }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .profit-cell { color: var(--profit); font-weight: 600; }
+        .loss-cell   { color: var(--loss);   font-weight: 600; }
+        .neutral-cell{ color: var(--text-muted); }
+
+        /* ── Total Row ── */
+        tfoot tr { background: var(--surface2); }
+        tfoot td {
+            padding: 14px 14px;
+            text-align: right;
+            font-weight: 600;
+            border-top: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+        tfoot td:first-child {
+            text-align: left;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ── Action Bar ── */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+        .btn-primary:hover { background: #79b8ff; border-color: #79b8ff; }
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border-color: var(--border);
+        }
+        .btn-secondary:hover { background: var(--surface2); border-color: var(--text-muted); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .status-badge {
+            margin-left: auto;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+        .status-dot.ok      { background: var(--loss); box-shadow: 0 0 5px var(--loss); }
+        .status-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
+        .status-dot.error   { background: var(--profit); }
+
+        @keyframes pulse {
+            0%,100% { opacity: 1; }
+            50%      { opacity: 0.3; }
+        }
+
+        /* ── Spinner ── */
+        .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid rgba(88,166,255,0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+
+    <header>
+        <div class="header-icon">📊</div>
+        <div>
+            <h1>擔保品 ETF 損益追蹤器</h1>
+            <p>台股 ETF · 即時收盤價 · 自動計算損益</p>
+        </div>
+    </header>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+        <div class="card">
+            <div class="card-label">總投入成本</div>
+            <div class="card-value" id="sum-cost">—</div>
+        </div>
+        <div class="card">
+            <div class="card-label">目前總市值</div>
+            <div class="card-value" id="sum-value">—</div>
+        </div>
+        <div class="card">
+            <div class="card-label">損益金額</div>
+            <div class="card-value" id="sum-pl">—</div>
+        </div>
+        <div class="card">
+            <div class="card-label">整體報酬率</div>
+            <div class="card-value" id="sum-roi">—</div>
+        </div>
+    </div>
+
+    <!-- Main Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="dot"></span>
+            持倉明細
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">ETF</th>
+                        <th>持有股數</th>
+                        <th>總投入成本 (元)</th>
+                        <th>平均成本 (元)</th>
+                        <th>今日收盤價 (元)</th>
+                        <th>目前市值 (元)</th>
+                        <th>損益金額 (元)</th>
+                        <th>報酬率 (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="etf-body"></tbody>
+                <tfoot>
+                    <tr>
+                        <td>合計</td>
+                        <td></td>
+                        <td id="ft-cost">—</td>
+                        <td></td>
+                        <td></td>
+                        <td id="ft-value">—</td>
+                        <td id="ft-pl">—</td>
+                        <td id="ft-roi">—</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="action-bar">
+            <button class="btn btn-primary" id="btn-fetch" onclick="fetchPrices()">
+                <span id="fetch-icon">🔄</span> 抓取今日收盤價
+            </button>
+            <button class="btn btn-secondary" onclick="calculateAll()">
+                💾 重新計算 / 儲存
+            </button>
+            <div class="status-badge">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-msg">輸入持股資料後點擊抓取。</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const ETF_LIST = [
+    { code: '00713', name: '元大台灣高息低波' },
+    { code: '00858', name: '永豐美國500大' },
+    { code: '00927', name: '群益半導體收益' },
+];
+
+// ── 建立表格 ────────────────────────────────────────
+function renderTable() {
+    const tbody = document.getElementById('etf-body');
+    tbody.innerHTML = '';
+    ETF_LIST.forEach(({ code, name }) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="etf-code">${code}</div>
+                <div class="etf-name">${name}</div>
+            </td>
+            <td><input type="number" id="shares-${code}" placeholder="股數" min="0" oninput="calculateAll()"></td>
+            <td><input type="number" id="cost-${code}"   placeholder="總成本" min="0" oninput="calculateAll()"></td>
+            <td id="avg-${code}"   class="mono neutral-cell">—</td>
+            <td><input type="number" id="price-${code}"  placeholder="可手填" step="0.01" min="0" oninput="calculateAll()"></td>
+            <td id="value-${code}" class="mono">—</td>
+            <td id="pl-${code}"    class="mono neutral-cell">—</td>
+            <td id="roi-${code}"   class="mono neutral-cell">—</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// ── 讀取 localStorage ───────────────────────────────
+function loadData() {
+    ETF_LIST.forEach(({ code }) => {
+        ['shares','cost','price'].forEach(field => {
+            const v = localStorage.getItem(`${field}-${code}`);
+            if (v) document.getElementById(`${field}-${code}`).value = v;
+        });
+    });
+}
+
+// ── 計算損益 ────────────────────────────────────────
+function fmt(n) {
+    return n.toLocaleString('zh-TW', { maximumFractionDigits: 0 });
+}
+
+function applyPL(elPL, elROI, pl, hasData) {
+    if (!hasData) {
+        elPL.textContent = '—'; elROI.textContent = '—';
+        elPL.className = 'mono neutral-cell'; elROI.className = 'mono neutral-cell';
+        return;
+    }
+    const cls = pl > 0 ? 'profit-cell' : pl < 0 ? 'loss-cell' : 'neutral-cell';
+    elPL.className  = `mono ${cls}`;
+    elROI.className = `mono ${cls}`;
+}
+
+function calculateAll() {
+    let sumCost = 0, sumValue = 0;
+
+    ETF_LIST.forEach(({ code }) => {
+        const shares = parseFloat(document.getElementById(`shares-${code}`).value) || 0;
+        const cost   = parseFloat(document.getElementById(`cost-${code}`).value)   || 0;
+        const price  = parseFloat(document.getElementById(`price-${code}`).value)  || 0;
+
+        // 儲存
+        ['shares','cost','price'].forEach(f => {
+            localStorage.setItem(`${f}-${code}`, document.getElementById(`${f}-${code}`).value);
+        });
+
+        // 平均成本
+        const avgEl = document.getElementById(`avg-${code}`);
+        avgEl.textContent = (shares > 0 && cost > 0) ? (cost / shares).toFixed(2) : '—';
+
+        // 市值與損益
+        const totalValue = shares * price;
+        const pl  = totalValue - cost;
+        const roi = cost > 0 ? (pl / cost) * 100 : 0;
+        const hasData = cost > 0 && totalValue > 0;
+
+        document.getElementById(`value-${code}`).textContent = totalValue > 0 ? fmt(totalValue) : '—';
+
+        const plEl  = document.getElementById(`pl-${code}`);
+        const roiEl = document.getElementById(`roi-${code}`);
+        if (hasData) {
+            plEl.textContent  = fmt(pl);
+            roiEl.textContent = roi.toFixed(2) + ' %';
+        }
+        applyPL(plEl, roiEl, pl, hasData);
+
+        sumCost  += cost;
+        sumValue += totalValue;
+    });
+
+    const totalPL  = sumValue - sumCost;
+    const totalROI = sumCost > 0 ? (totalPL / sumCost) * 100 : 0;
+    const hasTotal = sumCost > 0 && sumValue > 0;
+
+    // Summary cards
+    const plSign = totalPL >= 0 ? '' : '';
+    document.getElementById('sum-cost').textContent  = sumCost  > 0 ? fmt(sumCost)  : '—';
+    document.getElementById('sum-value').textContent = sumValue > 0 ? fmt(sumValue) : '—';
+    if (hasTotal) {
+        const plCard  = document.getElementById('sum-pl');
+        const roiCard = document.getElementById('sum-roi');
+        plCard.textContent  = fmt(totalPL);
+        roiCard.textContent = totalROI.toFixed(2) + ' %';
+        plCard.className  = `card-value ${totalPL > 0 ? 'profit' : totalPL < 0 ? 'loss' : ''}`;
+        roiCard.className = `card-value ${totalPL > 0 ? 'profit' : totalPL < 0 ? 'loss' : ''}`;
+    } else {
+        document.getElementById('sum-pl').textContent  = '—';
+        document.getElementById('sum-roi').textContent = '—';
+        document.getElementById('sum-pl').className  = 'card-value';
+        document.getElementById('sum-roi').className = 'card-value';
+    }
+
+    // Footer row
+    document.getElementById('ft-cost').textContent  = sumCost  > 0 ? fmt(sumCost)  : '—';
+    document.getElementById('ft-value').textContent = sumValue > 0 ? fmt(sumValue) : '—';
+    const ftPL  = document.getElementById('ft-pl');
+    const ftROI = document.getElementById('ft-roi');
+    if (hasTotal) {
+        ftPL.textContent  = fmt(totalPL);
+        ftROI.textContent = totalROI.toFixed(2) + ' %';
+        const cls = totalPL > 0 ? 'profit-cell' : totalPL < 0 ? 'loss-cell' : '';
+        ftPL.className  = cls;
+        ftROI.className = cls;
+    } else {
+        ftPL.textContent = '—'; ftROI.textContent = '—';
+    }
+}
+
+// ── 抓取收盤價（多代理備援）────────────────────────
+async function fetchPrices() {
+    const btn    = document.getElementById('btn-fetch');
+    const icon   = document.getElementById('fetch-icon');
+    const dot    = document.getElementById('status-dot');
+    const msgEl  = document.getElementById('status-msg');
+
+    btn.disabled = true;
+    icon.innerHTML = '<span class="spinner"></span>';
+    dot.className  = 'status-dot loading';
+    msgEl.textContent = '正在連線取得收盤價，請稍候…';
+
+    const TARGET = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
+    const PROXIES = [
+        TARGET,
+        `https://corsproxy.io/?${encodeURIComponent(TARGET)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`,
+        `https://thingproxy.freeboard.io/fetch/${TARGET}`,
+    ];
+
+    let data = null;
+    let usedProxy = '';
+
+    for (const url of PROXIES) {
+        try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timer);
+            if (!res.ok) continue;
+            const json = await res.json();
+            if (Array.isArray(json) && json.length > 0) {
+                data = json;
+                usedProxy = url === TARGET ? '直連' : new URL(url).hostname;
+                break;
+            }
+        } catch (e) {
+            console.warn('代理失敗：', url, e.message);
+        }
+    }
+
+    btn.disabled = false;
+    icon.textContent = '🔄';
+
+    if (!data) {
+        dot.className = 'status-dot error';
+        msgEl.textContent = '❌ 所有來源連線失敗，請手動輸入收盤價。';
+        return;
+    }
+
+    let found = 0;
+    data.forEach(stock => {
+        const match = ETF_LIST.find(e => e.code === stock.Code);
+        if (match) {
+            document.getElementById(`price-${stock.Code}`).value = stock.ClosingPrice;
+            found++;
+        }
+    });
+
+    if (found > 0) {
+        dot.className = 'status-dot ok';
+        const now = new Date().toLocaleTimeString('zh-TW');
+        msgEl.textContent = `✅ ${now} 更新成功（${found} 檔，來源：${usedProxy}）`;
+        calculateAll();
+    } else {
+        dot.className = 'status-dot error';
+        msgEl.textContent = '⚠️ 連線成功，但找不到目標 ETF 資料（可能今日休市）。';
+    }
+}
+
+// ── 初始化 ──────────────────────────────────────────
+window.onload = () => {
+    renderTable();
+    loadData();
+    calculateAll();
+};
+</script>
+</body>
+</html>
