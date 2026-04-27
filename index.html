@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>擔保品 ETF 損益追蹤器</title>
+    <title>ETF損益計算器</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -147,8 +147,8 @@
     <header>
         <div class="header-icon">📊</div>
         <div>
-            <h1>擔保品 ETF 損益追蹤器</h1>
-            <p>台股 ETF · 證交所 + Yahoo Finance · 自動計算損益</p>
+            <h1>ETF損益計算器</h1>
+            <p>台股 ETF · Yahoo Finance 即時報價（延遲約 15 分鐘）</p>
         </div>
     </header>
 
@@ -189,7 +189,7 @@
         </div>
         <div class="action-bar">
             <button class="btn btn-primary" id="btn-fetch" onclick="fetchPrices()">
-                <span id="fetch-icon">🔄</span> 抓取今日收盤價
+                <span id="fetch-icon">🔄</span> 抓取今日行情
             </button>
             <button class="btn btn-secondary" onclick="calculateAll()">
                 💾 重新計算 / 儲存
@@ -204,17 +204,15 @@
 </div>
 <script>
 // ── ETF 清單 ─────────────────────────────────────────────────
-// source: 'twse' → 從證交所批次抓
-// source: 'yahoo' → 從 Yahoo Finance 單獨抓（適用上櫃 ETF）
-// yahooSymbol: Yahoo Finance 代號格式（上市 .TW，上櫃 .TWO）
+// .TW  = 上市（證交所）
+// .TWO = 上櫃（櫃買中心）
 const ETF_LIST = [
-    { code: '00713', name: '元大台灣高息低波', source: 'twse',  yahooSymbol: '00713.TW'  },
-    { code: '00858', name: '永豐美國500大',    source: 'yahoo', yahooSymbol: '00858.TWO' },
-    { code: '00927', name: '群益半導體收益',   source: 'twse',  yahooSymbol: '00927.TW'  },
+    { code: '00713', name: '元大台灣高息低波', symbol: '00713.TW'  },
+    { code: '00858', name: '永豐美國500大',    symbol: '00858.TWO' },
+    { code: '00927', name: '群益半導體收益',   symbol: '00927.TW'  },
 ];
 
-const TWSE_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
-
+// ── 代理備援 ─────────────────────────────────────────────────
 function makeProxies(url) {
     return [
         url,
@@ -223,30 +221,9 @@ function makeProxies(url) {
     ];
 }
 
-// ── 從 Yahoo Finance v8 API 抓單支股票收盤價 ─────────────────
+// ── 抓單支 Yahoo Finance 報價 ────────────────────────────────
 async function fetchYahooPrice(symbol) {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
-    const proxies = makeProxies(url);
-    for (const proxy of proxies) {
-        try {
-            const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), 10000);
-            const res = await fetch(proxy, { signal: ctrl.signal });
-            clearTimeout(timer);
-            if (!res.ok) continue;
-            const json = await res.json();
-            // 路徑：result[0].meta.regularMarketPrice
-            const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
-            if (price != null) return String(price);
-        } catch (e) {
-            console.warn('Yahoo 失敗：', proxy, e.message);
-        }
-    }
-    return null;
-}
-
-// ── 從 TWSE 批次抓多支 ───────────────────────────────────────
-async function fetchWithFallback(url) {
     for (const proxy of makeProxies(url)) {
         try {
             const ctrl = new AbortController();
@@ -255,15 +232,16 @@ async function fetchWithFallback(url) {
             clearTimeout(timer);
             if (!res.ok) continue;
             const json = await res.json();
-            if (Array.isArray(json) && json.length > 0) return json;
+            const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
+            if (price != null) return parseFloat(price).toFixed(2);
         } catch (e) {
-            console.warn('TWSE 代理失敗：', proxy, e.message);
+            console.warn('Yahoo 失敗：', proxy, e.message);
         }
     }
     return null;
 }
 
-// ── 主要抓取流程 ─────────────────────────────────────────────
+// ── 主要抓取流程（三檔同時發出）────────────────────────────
 async function fetchPrices() {
     const btn   = document.getElementById('btn-fetch');
     const icon  = document.getElementById('fetch-icon');
@@ -273,60 +251,33 @@ async function fetchPrices() {
     btn.disabled = true;
     icon.innerHTML = '<span class="spinner"></span>';
     dot.className  = 'status-dot loading';
-    msgEl.textContent = '正在查詢行情，請稍候…';
+    msgEl.textContent = '正在查詢 Yahoo Finance 行情…';
 
-    // 分出兩種來源的 ETF
-    const twseEtfs  = ETF_LIST.filter(e => e.source === 'twse');
-    const yahooEtfs = ETF_LIST.filter(e => e.source === 'yahoo');
-
-    // 同時發出：TWSE 批次 + 每支 Yahoo 各一個請求
-    const [twseData, ...yahooPrices] = await Promise.all([
-        fetchWithFallback(TWSE_URL),
-        ...yahooEtfs.map(e => fetchYahooPrice(e.yahooSymbol)),
-    ]);
+    // 三檔同時發出請求
+    const prices = await Promise.all(ETF_LIST.map(e => fetchYahooPrice(e.symbol)));
 
     btn.disabled = false;
     icon.textContent = '🔄';
 
-    // 填入 TWSE 價格
     let found = 0;
-    if (twseData) {
-        twseData.forEach(stock => {
-            const match = twseEtfs.find(e => e.code === stock.Code);
-            if (match) {
-                const price = stock.ClosingPrice;
-                if (price && price !== '--') {
-                    document.getElementById(`price-${match.code}`).value = price;
-                    found++;
-                }
-            }
-        });
-    }
-
-    // 填入 Yahoo 價格
-    yahooEtfs.forEach((etf, i) => {
-        const price = yahooPrices[i];
-        if (price) {
-            document.getElementById(`price-${etf.code}`).value = parseFloat(price).toFixed(2);
+    ETF_LIST.forEach((etf, i) => {
+        if (prices[i] != null) {
+            document.getElementById(`price-${etf.code}`).value = prices[i];
             found++;
         }
     });
 
     const now = new Date().toLocaleTimeString('zh-TW');
-    const twseOk  = twseData ? '證交所✓' : '證交所✗';
-    const yahooOk = yahooPrices.every(p => p != null) ? 'Yahoo✓'
-                  : yahooPrices.some(p => p != null)  ? 'Yahoo⚠'
-                  : 'Yahoo✗';
-
     if (found === ETF_LIST.length) {
         dot.className = 'status-dot ok';
-        msgEl.textContent = `✅ ${now} 全部更新（${twseOk} ${yahooOk}）`;
+        msgEl.textContent = `✅ ${now} 全部更新（Yahoo Finance，延遲約 15 分鐘）`;
     } else if (found > 0) {
+        const failed = ETF_LIST.filter((_, i) => prices[i] == null).map(e => e.code).join('、');
         dot.className = 'status-dot partial';
-        msgEl.textContent = `⚠️ ${now} 部分更新 ${found}/${ETF_LIST.length} 檔（${twseOk} ${yahooOk}）`;
+        msgEl.textContent = `⚠️ ${now} 部分更新，${failed} 抓取失敗，請手動輸入。`;
     } else {
         dot.className = 'status-dot error';
-        msgEl.textContent = `❌ 抓取失敗，請手動輸入收盤價。`;
+        msgEl.textContent = '❌ 抓取失敗，請檢查網路或手動輸入收盤價。';
         return;
     }
 
@@ -337,14 +288,14 @@ async function fetchPrices() {
 function renderTable() {
     const tbody = document.getElementById('etf-body');
     tbody.innerHTML = '';
-    ETF_LIST.forEach(({ code, name, source }) => {
-        const srcLabel = source === 'yahoo' ? '櫃買中心' : '證交所';
+    ETF_LIST.forEach(({ code, name, symbol }) => {
+        const market = symbol.endsWith('.TWO') ? '櫃買中心' : '證交所';
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
                 <div class="etf-code">${code}</div>
                 <div class="etf-name">${name}</div>
-                <div class="etf-src">${srcLabel}</div>
+                <div class="etf-src">${market}</div>
             </td>
             <td><input type="number" id="shares-${code}" placeholder="股數"  min="0" oninput="calculateAll()"></td>
             <td><input type="number" id="cost-${code}"   placeholder="總成本" min="0" oninput="calculateAll()"></td>
@@ -358,6 +309,7 @@ function renderTable() {
     });
 }
 
+// ── localStorage ─────────────────────────────────────────────
 function loadData() {
     ETF_LIST.forEach(({ code }) => {
         ['shares','cost','price'].forEach(f => {
@@ -367,6 +319,7 @@ function loadData() {
     });
 }
 
+// ── 計算損益 ─────────────────────────────────────────────────
 function fmt(n) { return n.toLocaleString('zh-TW', { maximumFractionDigits: 0 }); }
 
 function applyPL(elPL, elROI, pl, hasData) {
