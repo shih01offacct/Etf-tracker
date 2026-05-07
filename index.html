@@ -207,9 +207,10 @@
 // .TW  = 上市（證交所）
 // .TWO = 上櫃（櫃買中心）
 const ETF_LIST = [
-    { code: '00713', name: '元大台灣高息低波', symbol: '00713.TW'  },
-    { code: '00858', name: '永豐美國500大',    symbol: '00858.TWO' },
-    { code: '00927', name: '群益半導體收益',   symbol: '00927.TW'  },
+    { code: '00713',  name: '元大台灣高息低波', symbol: '00713.TW'  },
+    { code: '00858',  name: '永豐美國500大',    symbol: '00858.TWO' },
+    { code: '00927',  name: '群益半導體收益',   symbol: '00927.TW'  },
+    { code: '00980A', name: '野村臺灣優選',     symbol: '00980A.TW' },
 ];
 
 // ── 代理備援 ─────────────────────────────────────────────────
@@ -241,7 +242,7 @@ async function fetchYahooPrice(symbol) {
     return null;
 }
 
-// ── 主要抓取流程（三檔同時發出）────────────────────────────
+// ── 主要抓取流程（同時發出）────────────────────────────
 async function fetchPrices() {
     const btn   = document.getElementById('btn-fetch');
     const icon  = document.getElementById('fetch-icon');
@@ -253,7 +254,6 @@ async function fetchPrices() {
     dot.className  = 'status-dot loading';
     msgEl.textContent = '正在查詢 Yahoo Finance 行情…';
 
-    // 三檔同時發出請求
     const prices = await Promise.all(ETF_LIST.map(e => fetchYahooPrice(e.symbol)));
 
     btn.disabled = false;
